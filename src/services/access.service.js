@@ -6,7 +6,8 @@ const crypto = require('node:crypto')
 const KeyTokenService = require("./keyToken.service")
 const { createTokenPair } = require("../auth/authUtils")
 const { getInfoData } = require("../utils")
-const { BadRequestError, ConflictRequestError } = require('../core/error.response')
+const { BadRequestError, ConflictRequestError, AuthFailureError } = require('../core/error.response')
+const { findByEmail } = require("./shop.service")
 const RoleShop = {
     SHOP: 'SHOP',
     WRITER: 'WRITER',
@@ -15,6 +16,61 @@ const RoleShop = {
 
 }
 class AccessService {
+
+    static logout = async (keyStore) => {
+
+        const delKey = await KeyTokenService.removeKeyById(keyStore._id)
+        console.log({ delKey })
+        return delKey
+    }
+
+
+    static login = async ({ email, password, refreshToken = null }) => {
+        /**
+          1- Check email in dbs
+          2- Match password
+          3- Create token pair (AT vs RT) ans save
+          4- generate token
+          5- get data return login
+         */
+        //1
+        const foundShop = await findByEmail({ email });
+        if (!foundShop) {
+            throw new BadRequestError('Shop not registered');
+        }
+        //2
+        const match = bcrypt.compare(password, foundShop.password);
+        if (!match) throw new AuthFailureError('Authentication error')
+        //3
+        const privateKey = crypto.randomBytes(64).toString('hex');
+        const publicKey = crypto.randomBytes(64).toString('hex');
+        //4 generate token
+        const { _id: userId } = foundShop
+        const tokens = await createTokenPair({
+            userId,
+            email
+        },
+            publicKey,
+            privateKey)
+
+        //5
+        await KeyTokenService.createKeyToken({
+            refreshToken: tokens.refreshToken,
+            privateKey,
+            publicKey, userId
+
+        })
+        return {
+            shop: getInfoData({ fields: ['_id', 'name', 'email'], object: foundShop }),
+            tokens
+        }
+
+
+
+    }
+
+
+
     static signUp = async ({ name, email, password }) => {
         // try {
         // Step1 : check email exists ??
