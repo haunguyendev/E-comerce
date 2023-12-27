@@ -1,13 +1,18 @@
 'use strict'
 
 const shopModel = require("../models/shop.model")
+const { updateOne } = require('../models/keytoken.model')
 const bcrypt = require('bcrypt')
 const crypto = require('node:crypto')
 const KeyTokenService = require("./keyToken.service")
-const { createTokenPair } = require("../auth/authUtils")
+const { createTokenPair, verifyJWT } = require("../auth/authUtils")
 const { getInfoData } = require("../utils")
-const { BadRequestError, ConflictRequestError, AuthFailureError } = require('../core/error.response')
+const { BadRequestError, ConflictRequestError, AuthFailureError, ForbiddenError } = require('../core/error.response')
 const { findByEmail } = require("./shop.service")
+const { Types } = require("mongoose")
+
+
+
 const RoleShop = {
     SHOP: 'SHOP',
     WRITER: 'WRITER',
@@ -16,6 +21,69 @@ const RoleShop = {
 
 }
 class AccessService {
+    /*
+     Check this token used?
+     
+     */
+
+    static handlerRefreshToken = async (refreshToken) => {
+        // Check xem token da duoc sua dung chua??
+        const foundToken = await KeyTokenService.findByRefreshTokenUsed(refreshToken)
+        if (foundToken) {
+            //Decode xem may la thang nao?
+            const { userId, email } = await verifyJWT(refreshToken, foundToken.privateKey)
+            console.log({ userId, email })
+            //xoa tat ca token trong keyStore
+            await KeyTokenService.deleteKeyById(userId)
+            throw new ForbiddenError("Something wrong happend!! Pls relogin")
+        }
+
+        //No, qua ngon
+        const holderToken = await KeyTokenService.findByRefreshToken(refreshToken)
+        if (!holderToken) {
+            throw new AuthFailureError('Shop not registered 1')
+        }
+        //verify JWT
+
+        const { userId, email } = await verifyJWT(refreshToken, holderToken.privateKey)
+        console.log('[2]--', { userId, email })
+        //Check Userid
+
+        const foundShop = await findByEmail({ email });
+        if (!foundShop) {
+            throw new AuthFailureError('Shop not registered 2')
+        }
+        //Create 1 cap token moi
+        const tokens = await createTokenPair({ userId, email }, holderToken.publicKey, holderToken.privateKey)
+
+        //update token
+        console.log(`before idddddddddd`, holderToken.refreshToken)
+
+        await KeyTokenService.updateOne({ _id: holderToken._id }, {
+            $set: {
+                refreshToken: tokens.refreshToken,
+            },
+            $addToSet: {
+                refreshTokensUsed: refreshToken,
+            },
+        });
+        console.log(`after idddddddddd`, holderToken.refreshToken)
+        return {
+            user: { userId, email }
+            , tokens
+
+        }
+
+
+
+
+
+
+    }
+
+
+
+
 
     static logout = async (keyStore) => {
 
