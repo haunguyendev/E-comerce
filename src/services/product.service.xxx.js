@@ -5,9 +5,12 @@ const { findAllDraftsForShop,
     publicProductByShop,
     findAllPublishForShop,
     unPublishProductByShop,
-    searchProductByUser
+    searchProductByUser,
+    findAllProducts,
+    findProduct
 
 } = require('../models/repositories/product.repo');
+
 
 //define Factory classto create product
 class ProductFactory {
@@ -35,7 +38,7 @@ class ProductFactory {
         return await publicProductByShop({ product_shop, product_id })
     }
     static async unPublishProductByShop({ product_shop, product_id }) {
-        return await publicProductByShop({ product_shop, product_id })
+        return await unPublishProductByShop({ product_shop, product_id })
     }
     //END PUT//
 
@@ -50,6 +53,12 @@ class ProductFactory {
     static async findAllPublishForShop({ product_shop, limit = 50, skip = 0 }) {
         const query = { product_shop, isPublished: true }
         return await findAllPublishForShop({ query, limit, skip })
+    }
+    static async findAllProducts({ limit = 50, sort = 'ctime', page = 1, filter = { isPublished: true } }) {
+        return await findAllProducts({ limit, sort, page, filter, select: ['product_name', 'product_price', 'product_thumb', 'product_description'] })
+    }
+    static async findProduct({ product_id }) {
+        return await findProduct({ product_id, unSelect: ['__v', 'product_variations'] })
     }
 
     static async searchProducts({ keySearch }) {
