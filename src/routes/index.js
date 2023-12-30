@@ -7,15 +7,6 @@ const router = express.Router()
 router.use(apiKey)
 //check permissions
 router.use(permission('0000'))
-
-
+router.use('/v1/api/product', require('./product'))
 router.use('/v1/api', require('./access'))
-// router.get('', (req, res, next) => {
-//     const strCompress = 'Hello Fantipjs'
-//     return res.status(200).json({
-//         message: 'Welcome Fantipjs',
-//         // metadata: strCompress.repeat(1000000)
-//     })
-// })
-
 module.exports = router

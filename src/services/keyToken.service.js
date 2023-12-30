@@ -51,7 +51,7 @@ class KeyTokenService {
         return await keytokenModel.findOne({ refreshToken }).lean()
     }
     static deleteKeyById = async (userId) => {
-        return await keytokenModel.findByIdAndDelete({ user: userId }).lean()
+        return await keytokenModel.findByIdAndDelete({ user: userId })
     }
     static updateOne = async (filter, update, options) => {
         return await keytokenModel.findOneAndUpdate(filter, update, options).lean()

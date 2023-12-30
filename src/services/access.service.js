@@ -25,6 +25,42 @@ class AccessService {
      Check this token used?
      
      */
+    static handlerRefreshTokenV2 = async ({ keyStore, user, refreshToken }) => {
+        // Check xem token da duoc sua dung chua??
+        const { userId, email } = user;
+        if (keyStore.refreshTokensUsed.includes(refreshToken)) {
+            await await KeyTokenService.deleteKeyById(userId)
+            throw new ForbiddenError(`Somthing wrong happened!! Pls relogin`)
+        }
+        if (keyStore.refreshToken !== refreshToken)
+            throw new AuthFailureError('Shop not registered')
+
+        const foundShop = await findByEmail({ email });
+        if (!foundShop) {
+            throw new AuthFailureError('Shop not registered')
+        }
+        //Create 1 cap token moi
+        const tokens = await createTokenPair({ userId, email }, keyStore.publicKey, keyStore.privateKey)
+
+        //update token
+        // console.log(`before idddddddddd`, holderToken.refreshToken)
+
+        await KeyTokenService.updateOne({ _id: keyStore._id }, {
+            $set: {
+                refreshToken: tokens.refreshToken,
+            },
+            $addToSet: {
+                refreshTokensUsed: refreshToken,
+            },
+        });
+
+
+        return {
+            user
+            , tokens
+
+        }
+    }
 
     static handlerRefreshToken = async (refreshToken) => {
         // Check xem token da duoc sua dung chua??
@@ -73,12 +109,6 @@ class AccessService {
             , tokens
 
         }
-
-
-
-
-
-
     }
 
 
