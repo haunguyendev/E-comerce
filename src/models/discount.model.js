@@ -67,6 +67,11 @@ const discountShema = new Schema({
     discount_is_active: {
         type: Boolean,
         // required: true,
+        default: true
+    },
+    discount_is_deleted: {
+        type: Boolean,
+        // required: true,
         default: false
     },
     discount_applies_to: {
@@ -89,4 +94,4 @@ const discountShema = new Schema({
     collection: COLLECTION_NAME
 });
 
-module.exports = model(DOCUMENT_NAME, apiKeySchema);
+module.exports = model(DOCUMENT_NAME, discountShema);

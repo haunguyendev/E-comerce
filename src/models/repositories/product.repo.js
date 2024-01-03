@@ -80,8 +80,10 @@ const findAllProducts = async ({ limit, sort, page, filter, select }) => {
         .lean()
 
 
-    console.log(await product.find(filter)
-    )
+    // console.log(await product.find(filter)
+    // )
+
+    console.log("dataaaaaaaaaa", products)
     return products
 
 }

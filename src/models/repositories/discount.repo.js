@@ -1,6 +1,6 @@
 'use strict';
 
-const { unGetSelectData, getSelectData } = require("../../utils");
+const { unGetSelectData, getSelectData, convertToObjectIdMongodb } = require("../../utils");
 
 const findAllDiscountCodesUnselect = async ({
     limit = 50,
@@ -44,7 +44,13 @@ const findAllDiscountCodesSelect = async ({
     return documents
 
 }
+
+const checkDiscountExists = async ({ model, filter }) => {
+    return await model.findOne(filter).lean()
+
+}
 module.exports = {
     findAllDiscountCodesUnselect,
-    findAllDiscountCodesSelect
+    findAllDiscountCodesSelect,
+    checkDiscountExists
 }
