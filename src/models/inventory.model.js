@@ -13,7 +13,7 @@ const inventorySchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Shop'
     },
-    inven_revervations: { type: Array, defaul: [] }
+    inven_reservations: { type: Array, defaul: [] }
     /*
     cartId:,
     stock:1,
