@@ -12,10 +12,10 @@ const client = new Client({
 })
 
 client.on('ready', () => {
-    console.log(`Logged is as ${client.user.tag}`)
+    console.log(`Logged is as ${client.user.tag}`);
 })
-const token = 'MTE5NDMwNDYyNTU1ODQzNzkwOA.Gy3zMx.rAO8Ky5zE_8CKSpqXanW-sNgxsIUFO8d8XCFss'
-client.login(token)
+
+client.login(token);
 
 client.on('messageCreate', msg => {
     if (msg.author.bot) return;

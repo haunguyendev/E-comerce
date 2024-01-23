@@ -4,6 +4,8 @@
 const Comment = require('../models/comment.model')
 const { convertToObjectIdMongodb } = require('../utils/index')
 
+const { findProduct } = require("../models/repositories/product.repo")
+const { NotFoundError, BadRequestError } = require("../core/error.response")
 
 /*
 key features : Comment service
@@ -55,9 +57,9 @@ class CommentService {
             const maxRightValue = await Comment.findOne({
                 comment_productId: convertToObjectIdMongodb(productId)
             }, 'comment_right', { sort: { comment_right: -1 } })
-
+            console.log(maxRightValue)
             if (maxRightValue) {
-                rightValue = maxRightValue.right + 1
+                rightValue = maxRightValue.comment_right + 1
             } else {
                 rightValue = 1
 
@@ -99,7 +101,7 @@ class CommentService {
         }
         const comments = await Comment.find({
             comment_productId: convertToObjectIdMongodb(productId),
-            comment_parentId: convertToObjectIdMongodb(parentCommentId)
+            comment_parentId: parentCommentId
         }).select({
             comment_left: 1,
             comment_right: 1,
@@ -108,6 +110,54 @@ class CommentService {
 
         }).sort({ comment_left: 1 })
         return comments
+    }
+    //Deleted comment 
+    static async deleteComment({ commentId, productId }) {
+        //check product exist in database
+        const foundProduct = await findProduct({
+            product_id: productId
+
+        })
+        console.log('aaaaaaaaaaaaaaa', foundProduct)
+        if (!foundProduct) {
+            throw new NotFoundError("Product not found");
+        }
+        //1. Xac dinh left right of comment
+
+        const comment = await Comment.findById(commentId);
+        if (!comment) throw new NotFoundError("Comment not found");
+
+        const leftValue = comment.comment_left;
+        const rightValue = comment.comment_right;
+
+        //2. Tinh width
+        const width = rightValue - leftValue + 1;
+        // Xoa that ca cac comment trong case ta se xoa
+
+        await Comment.deleteMany({
+            comment_productId: convertToObjectIdMongodb(productId),
+            comment_left: { $gte: leftValue, $lte: rightValue },
+        });
+        //4. Cao nhat gia tri left vaf right  con lai
+
+        await Comment.updateMany({
+            comment_productId: convertToObjectIdMongodb(productId),
+            comment_right: { $gt: rightValue, $lt: leftValue }
+        }, {
+            $inc: {
+                comment_right: -width
+            }
+        })
+        await Comment.updateMany({
+            comment_productId: convertToObjectIdMongodb(productId),
+            comment_left: { $gt: rightValue }
+        }, {
+            $inc: {
+                comment_left: -width
+            }
+        })
+
+        return true;
 
 
 

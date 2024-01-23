@@ -1,18 +1,21 @@
+const { json } = require('express');
 const redisPubSubService = require('../services/redisPubSub.service')
 
 class inventoryServiceTest {
     constructor() {
+        console.log("actionnnnn in inventory service");
         redisPubSubService.subscribe('purchase_events', (channel, message) => {
-            inventoryServiceTest.updateInventory(message)
+            console.log(`Received message from channel ${channel}:`, message);
 
-        })
+            const messageObject = JSON.parse(message);
+            this.updateInventory(messageObject); // Call the method on the instance
+        });
+
 
     }
 
-    static updateInventory({ productId, quantity }) {
+    updateInventory({ productId, quantity }) {
         console.log(`Updated inventory ${productId} quantity: ${quantity}`);
-
-
     }
 
 
