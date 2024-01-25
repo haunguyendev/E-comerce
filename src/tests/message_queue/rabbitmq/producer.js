@@ -1,5 +1,5 @@
 const amqp = require('amqplib');
-const messages = 'hello, RabbitMQ for Tipjs Javascript';
+const messages = 'New a Product: Title ';
 
 const runProducer = async () => {
     try {
